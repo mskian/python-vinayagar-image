@@ -15,6 +15,7 @@ HEADER_HEIGHT = 150
 FONT_URL = "https://github.com/google/fonts/raw/refs/heads/main/ofl/hindmadurai/HindMadurai-Bold.ttf"
 FONT_NAME = "HindMadurai-Bold.ttf"
 GANESH_IMAGE = "vinayagar.png"
+GANESH_IMAGE_URL = "https://raw.githubusercontent.com/mskian/python-vinayagar-image/refs/heads/main/vinayagar.png"
 
 # Twemoji sources (PNG/72x72)
 TWEMOJI_URLS = {
@@ -39,10 +40,10 @@ def validate_name(name: str) -> str:
 def ensure_icon(local_file: str, url: str):
     if not os.path.exists(local_file):
         try:
-            print(f"📥 Downloading emoji icon: {local_file}")
+            print(f"📥 Downloading file: {local_file}")
             urllib.request.urlretrieve(url, local_file)
         except Exception as e:
-            print(f"⚠ Could not download emoji {local_file}: {e}")
+            print(f"⚠ Could not download {local_file}: {e}")
 
 # === Font Handling ===
 def get_font_path() -> str:
@@ -189,6 +190,9 @@ def main():
     # Ensure emoji icons downloaded
     ensure_icon(HEADER_EMOJI, TWEMOJI_URLS["lamp"])
     ensure_icon(FOOTER_EMOJI, TWEMOJI_URLS["sparkle"])
+
+    # Ensure Ganesh image downloaded
+    ensure_icon(GANESH_IMAGE, GANESH_IMAGE_URL)
 
     # Downloads dir
     sys_platform = platform.system()

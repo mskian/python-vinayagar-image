@@ -59,10 +59,11 @@ allow-external-apps=true
 
 ## Sources and Credits
 
+- CLI Concept - <https://github.com/mskian/python-indian-flag>
 - Goolge Fonts
 - Twitter Emoji
-- Flaticons  
+- Flaticons - <https://www.flaticon.com/free-icon/hindu_10596750?term=hindu+god&page=1&position=14&origin=search&related_id=10596750>  
 
-### LICENSE
+## LICENSE
 
 MIT
