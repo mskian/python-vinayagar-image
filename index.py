@@ -1,5 +1,5 @@
 import re
-from flask import Flask, request, send_file, render_template_string, jsonify
+from flask import Flask, abort, request, send_file, render_template_string, jsonify
 from collections import defaultdict, deque
 from typing import Dict
 import tempfile, os, time, hashlib, secrets
@@ -36,6 +36,24 @@ def clean_cache():
             if os.path.exists(path):
                 os.remove(path)
 
+def validate_name(raw: str) -> str:
+    """
+    Validate and sanitize the name.
+    Only allow letters, numbers, spaces, and dashes.
+    Strip leading/trailing whitespace.
+    """
+    raw = raw.strip()
+    if not raw:
+        raise ValueError("Empty name")
+
+    if not re.match(r'^[\w\s\-\u0B80-\u0BFF]+$', raw):
+        raise ValueError("Invalid characters")
+
+    if len(raw) > 50:
+        raise ValueError("Too long")
+
+    return raw
+
 @app.after_request
 def set_security_headers(response):
     nonce = getattr(request, "csp_nonce", "")
@@ -44,7 +62,7 @@ def set_security_headers(response):
         f"style-src 'self' https://fonts.googleapis.com 'nonce-{nonce}'; "
         f"font-src https://fonts.gstatic.com; "
         f"script-src 'self' 'nonce-{nonce}'; "
-        f"img-src 'self' data: blob:; "
+        f"img-src 'self' data: blob: https://vinayagar.vercel.app 'nonce-{nonce}'; "
         "object-src 'none'; base-uri 'self';"
     )
     response.headers.update({
@@ -249,6 +267,131 @@ generateBtn.addEventListener("click", generateFlag);
 </html>
 """
 
+HTML_SHARE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>{{name}} - Happy Vinayagar Chaturthi 🪔</title>
+<meta name="description" content="Special Vinayagar Chaturthi Greeting Wishes from {{name}}">
+<meta property="og:title" content="{{name}} - Happy Vinayagar Chaturthi 🪔">
+<meta property="og:description" content="Special Vinayagar Chaturthi Greeting Wishes from {{name}}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{{image_url}}">
+<meta property="og:image:width" content="1080">
+<meta property="og:image:height" content="1080">
+<meta property="og:url" content="{{share_url}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{name}} - Happy Vinayagar Chaturthi 🪔">
+<meta name="twitter:description" content="Special Vinayagar Chaturthi Greeting Wishes from {{name}}">
+<meta name="twitter:image" content="{{image_url}}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com" nonce="{{nonce}}">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin nonce="{{nonce}}">
+<link href="https://fonts.googleapis.com/css2?family=Mozilla+Text:wght@200..700&display=swap" rel="stylesheet" nonce="{{nonce}}">
+
+<style nonce="{{nonce}}">
+    body { 
+        background: linear-gradient(135deg, #fdf0f3, #fff5f9, #faf3f6); 
+        font-family:"Mozilla Text",sans-serif; 
+        text-align:center; 
+        padding:20px; 
+        margin:0;
+    }
+    h1 { 
+        color:#b3164b; 
+        font-size:clamp(1.5rem, 2vw, 1.5rem); 
+        margin-bottom:10px; 
+        font-weight:700;
+    }
+    p { 
+        color:#555; 
+        margin:10px 0 20px; 
+        font-size:clamp(1rem, 1.6vw, 1.15rem); 
+    }
+    .card {
+        background:#fff; 
+        border-radius:24px; 
+        box-shadow:0 8px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.05); 
+        padding:28px; 
+        max-width:680px; 
+        margin:auto; 
+        overflow:hidden;
+        border:1px solid #f1d7e4;
+    }
+    .card img { 
+        width:100%; 
+        height:auto; 
+        border-radius:18px; 
+        margin-top:18px; 
+        object-fit:cover;
+        box-shadow:0 6px 14px rgba(0,0,0,0.1);
+    }
+    .btn-container {
+        margin-top:24px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        width:100%;
+    }
+    .download-btn {
+        display:block;
+        width:100%;
+        max-width:320px;
+        padding:14px 32px;
+        background: linear-gradient(135deg, #ff6f91, #ff9671, #ffc75f);
+        color:#fff;
+        font-weight:700;
+        border-radius:50px;
+        text-decoration:none;
+        transition:all 0.3s ease;
+        font-size:1rem;
+        box-shadow:0 4px 14px rgba(255,111,145,0.4);
+        position:relative;
+        overflow:hidden;
+        text-align:center;
+    }
+    .download-btn::before {
+        content:"";
+        position:absolute;
+        top:-50%;
+        left:-50%;
+        width:200%;
+        height:200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.5) 20%, transparent 60%);
+        transform:rotate(25deg);
+        opacity:0;
+        transition:opacity 0.4s;
+    }
+    .download-btn:hover {
+        transform:translateY(-3px) scale(1.03);
+        box-shadow:0 6px 20px rgba(255,111,145,0.45);
+    }
+    .download-btn:hover::before {
+        opacity:1;
+    }
+    @media (max-width:480px) {
+        .card { padding:18px; border-radius:18px; }
+        .download-btn { width:100%; font-size:1rem; padding:14px; }
+    }
+</style>
+</head>
+<body>
+<div class="card">
+    <h1>Happy Vinayagar Chaturthi 🪔</h1>
+    <img src="{{image_url}}" alt="Vinayagar Greeting from {{name}}" loading="lazy" nonce="{{nonce}}">
+    <div class="btn-container">
+        <a href="{{image_url}}" download="vinayagar-greeting-{{name}}.png" class="download-btn" nonce="{{nonce}}">
+            ⬇️ Download
+        </a>
+    </div>
+</div>
+</body>
+</html>
+"""
+
 @app.route("/")
 def index():
     return render_template_string(HTML_FORM, nonce=request.csp_nonce)
@@ -337,6 +480,26 @@ def generate_flag_slug(raw_name):
     except Exception as e:
         print(f"❌ Internal error: {e}")
         return jsonify({"error": "An internal error occurred"}), 500
+    
+@app.route("/share/<path:raw_name>")
+def share_page(raw_name):
+    try:
+        name = validate_name(raw_name)
+    except Exception:
+        abort(400, description="Invalid name")
+
+    safe_name = re.escape(name)
+
+    image_url = f"https://vinayagar.vercel.app/image/{safe_name}"
+    share_url = f"https://vinayagar.vercel.app/share/{safe_name}"
+
+    return render_template_string(
+        HTML_SHARE,
+        nonce=request.csp_nonce,
+        name=safe_name,
+        image_url=image_url,
+        share_url=share_url
+    )
 
 if __name__ == "__main__":
     app.run()
